@@ -11,7 +11,9 @@ namespace uVerb
         List<Vector3> pointsToMap = new List<Vector3>();
         Vector3[] dirs = new Vector3[]
         {
-        Vector3.forward, Vector3.back, Vector3.left, Vector3.right
+            Vector3.forward, Vector3.back,
+            Vector3.left, Vector3.right,
+            Vector3.up, Vector3.down
         };
         Vector3 origin;
 
@@ -40,7 +42,7 @@ namespace uVerb
                 if (pointsToMap.Count == 0) mapping = false;
             }
 
-            parent.addPoints(points);
+            parent.addPoints(points.ToArray());
         }
 
         void MapPoint (Vector3 p)
@@ -60,9 +62,9 @@ namespace uVerb
 
                         else
                         {
-                            parent.SurfaceArea++;
+                            parent.addToSurfaceArea(p + dirs[i]);
                             Renderer rend = hit.transform.gameObject.GetComponent<Renderer>();
-                            parent.mapMaterial(rend.material);
+                            if (rend != null) parent.mapMaterial(rend.material);
                         }
                     }
                 }
@@ -74,5 +76,4 @@ namespace uVerb
             return points.Contains(p);
         }
     }
-
 }

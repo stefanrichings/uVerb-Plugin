@@ -11,6 +11,7 @@ namespace uVerb
      *      PUBLIC
      *      ======
      *      manager     :   Singleton object of Manager.
+     *      type        :   The way to calculate Reverb.
      *      
      *      PRIVATE
      *      =======
@@ -24,6 +25,9 @@ namespace uVerb
      */
     public class uVerbAudioManager : MonoBehaviour
     {
+        /**
+         * ReverbType : Enum to specify the use of Boxes for reverb or realtime calculations
+         */
         public enum ReverbType
         {
             Boxes,
@@ -78,12 +82,19 @@ namespace uVerb
             }
         }
 
+        /**
+         * DoRealtime : Foreach Node, check if it's in the area and update map
+         */
         void DoRealtime ()
         {
             foreach (uVerbNode node in nodes)
             {
-                node.isActive = true;
-                node.UpdateProperties(mapper, mapper.reverbType);
+                node.isActive = false;
+                if (mapper.pointIsMapped(node.Location))
+                {
+                    node.isActive = true;
+                    node.UpdateProperties(mapper, mapper.reverbType);
+                }
             }
         }
 
@@ -174,6 +185,9 @@ namespace uVerb
             return numBuffers;
         }
 
+        /**
+         * GetSampleRate : Get the sample rate
+         */
         public int GetSampleRate()
         {
             return sampleRate;

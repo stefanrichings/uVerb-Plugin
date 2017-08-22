@@ -107,7 +107,6 @@ namespace uVerb
             };
 
             saAvg = CalculateAvgSurfaceAbsorb();
-            Debug.Log(GetAverageRT60());
         }
 
         /**
@@ -143,7 +142,7 @@ namespace uVerb
             if (Single.IsNaN(rt60))
                 return 0.1f;
             else
-                return (k*volume) / saAvg;
+                return (k * volume) / saAvg;
         }
 
         /**

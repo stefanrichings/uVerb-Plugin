@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 
 namespace uVerb
 {
@@ -19,13 +20,34 @@ namespace uVerb
             
             public void Assign ()
             {
-                assigned = approximateMaterial();
+                assigned = approximateMaterial(name);
             }
 
-            // Need to do the 'learning' bits to approximate the material
-            uVerbEnums.Materials approximateMaterial ()
+            uVerbEnums.Materials approximateMaterial (string str)
             {
-                return 0;
+                string[] names = Enum.GetNames(typeof(uVerbEnums.Materials));
+                int index = 0, distance = 999;
+                for (int i = 0; i < names.Length; i++)
+                {
+                    int x = Levenshtein.EditDistance(str, names[i]);
+                    if (i == 0)
+                    {
+                        index = i;
+                        distance = x;
+                    }
+
+                    else
+                    {
+                        if (x < distance)
+                        {
+                            index = i;
+                            distance = x;
+                        }
+                    }
+                }
+
+                uVerbEnums.Materials m = (uVerbEnums.Materials)index;
+                return m;
             }
         }
 

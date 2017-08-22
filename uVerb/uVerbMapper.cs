@@ -5,26 +5,53 @@ using UnityEngine;
 
 namespace uVerb
 {
+    /**
+     * uVerbMapper : Primary Mapping System for Realtime Calculation
+     * =============================================================
+     * 
+     *      PUBLIC
+     *      ======
+     *      raycastingType  :   Which type of raycasting to use? Unity Physics or Mesh?
+     *      reverbType      :   The reverb type to use
+     *      DEBUG           :   Debug capabilities on or off
+     *      
+     *      PRIVATE
+     *      =======
+     *      mr              :   Material Reader Object
+     *      materialInfo    :   Material info read from JSON file
+     *      mappedPoints    :   List of all points mapped
+     *      nodes           :   List of nodes to map from
+     *      surfaceArea     :   List of surface area points
+     *      origin          :   Current origin position of the node (converted)
+     *      saAvg           :   Average surface absorption
+     *      k               :   Metres constant for conversion
+     */
     public class uVerbMapper : MonoBehaviour
     {
-        public uVerbDetectionZone.ReverbType reverbType;
-        uVerbMaterialReader mr = new uVerbMaterialReader();
-        public bool DEBUG;
-        Vector3 origin;
-        List<Vector3> mappedPoints = new List<Vector3>();
-        List<uVerbMappingNodeAdv> nodes = new List<uVerbMappingNodeAdv>();
-        uVerbMaterials materialInfo;
-        float surfaceArea = 0;
-        float saAvg;
-        const float k = 0.161f;
-
+        /**
+         * RaycastingType : Which Type of Raycasting to use
+         */
         public enum RaycastingType
         {
             Physics,
             Mesh
         }
         public RaycastingType raycastingType = RaycastingType.Physics;
+        public uVerbDetectionZone.ReverbType reverbType;
+        public bool DEBUG;
 
+        uVerbMaterialReader mr = new uVerbMaterialReader();
+        uVerbMaterials materialInfo;
+        List<Vector3> mappedPoints = new List<Vector3>();
+        List<uVerbMappingNodeAdv> nodes = new List<uVerbMappingNodeAdv>();
+        List<Vector3> surfaceArea = new List<Vector3>();
+        Vector3 origin;
+        float saAvg;
+        const float k = 0.161f;
+
+        /**
+         * Origin : Get current origin point
+         */
         public Vector3 Origin
         {
             get
@@ -33,6 +60,9 @@ namespace uVerb
             }
         }
 
+        /**
+         * GetAverageRT60 : Gets the average RT60, IsNaN is for safety.
+         */
         public float GetAverageRT60 ()
         {
             float rt60 = (k * Volume) / saAvg;
@@ -42,11 +72,17 @@ namespace uVerb
                 return (k * Volume) / saAvg;
         }
 
+        /**
+         * getMapped : Gets an array of the mapped points.
+         */
         public Vector3[] getMapped ()
         {
             return mappedPoints.ToArray();
         }
 
+        /**
+         * addPoints : Two methods to add points to mapped points.
+         */
         public void addPoints (Vector3 pt)
         {
             mappedPoints.Add(pt);
@@ -57,29 +93,41 @@ namespace uVerb
             mappedPoints.AddRange(pts);
         }
 
-        public void addPoints (List<Vector3> pts)
+        /**
+         * addToSurfaceArea : Two methods to add points to the list of surface area points.
+         */
+        public void addToSurfaceArea (Vector3 pt)
         {
-            mappedPoints.AddRange(pts);
+            surfaceArea.Add(pt);
         }
 
+        public void addToSurfaceArea (Vector3[] pts)
+        {
+            surfaceArea.AddRange(pts);
+        }
+
+        /**
+         * mapMaterial : Takes a material to add to the material reader.
+         */
         public void mapMaterial (Material mat)
         {
             mr.LogMaterial(mat);
         }
 
+        /**
+         * SurfaceArea : Returns the surface area, needs tweaking I think.
+         */
         public float SurfaceArea
         {
             get
             {
-                return surfaceArea;
-            }
-
-            set
-            {
-                surfaceArea = value;
+                return surfaceArea.Count;
             }
         }
 
+        /**
+         * Volume : Returns the given volume of a space.
+         */
         public float Volume
         {
             get
@@ -88,51 +136,78 @@ namespace uVerb
             }
         }
 
+        /**
+         * pointIsMapped : See if point is already mapped
+         */
+        public bool pointIsMapped (Vector3 v)
+        {
+            return (mappedPoints.Contains(convertVector(v)));
+        }
+
+        /**
+         * convertVector : Turns out this is a critical component, normalised points to be regulated. 
+         */
+        public Vector3 convertVector (Vector3 vec)
+        {
+            float xPos = Mathf.FloorToInt(vec.x);
+            xPos += 0.5f;
+            float zPos = Mathf.FloorToInt(vec.z);
+            zPos += 0.5f;
+            float yPos = Mathf.FloorToInt(vec.y);
+            yPos += 0.5f;
+
+            return new Vector3(xPos, yPos, zPos);
+        }
+
+        /**
+         * Start : Do stuff at Start, after Awake when the Audio Manager is doing its thing
+         */
         void Start ()
         {
             uVerbAudioManager manager = FindObjectOfType(typeof(uVerbAudioManager)) as uVerbAudioManager;
             materialInfo = manager.GetMaterialData();
         }
 
+        /**
+         * Update : Map every frame
+         */
         void Update ()
         {
             Map();
         }
 
+        /**
+         * Map : Map the room and only do so when we need to reset
+         */
         void Map ()
         {
-            SurfaceArea = 0;
-
-            FindFloor();
-            mappedPoints.Clear();
-            RaycastHit[] hits;
-            hits = Physics.RaycastAll(origin, Vector3.up);
-            float distance = -1f;
-            for (int i = 0; i < hits.Length; i++)
+            bool reset = ResetMap();
+            if (reset)
             {
-                RaycastHit hit = hits[i];
-                if (hit.transform.gameObject != gameObject)
-                {
-                    if (distance == -1f) distance = hit.distance;
-                    else if (distance > hit.distance) distance = hit.distance;
-                }
+                CreateNode(0);
+                saAvg = CalculateSurfaceAbsorb();
+                Debug.Log("Reverberation time is " + GetAverageRT60() + "s");
             }
-
-            distance = Mathf.FloorToInt(distance);
-            int j = 0;
-            while (j <= distance)
-            {
-                CreateNode(distance);
-                if (j == 0)
-                {
-                    SurfaceArea += (mappedPoints.Count * 2);
-                }
-                j++;
-            }
-
-            saAvg = CalculateSurfaceAbsorb();
         }
 
+        /**
+         * ResetMap : Re-do the origin point, if it isn't in the mapped points, reset the room mapping.
+         */
+        bool ResetMap ()
+        {
+            origin = convertVector(new Vector3(transform.position.x, transform.position.y, transform.position.z));
+            if (mappedPoints.Contains(origin))
+                return false;
+
+            surfaceArea.Clear();
+            nodes.Clear();
+            mappedPoints.Clear();
+            return true;
+        }
+
+        /**
+         * CalculateSurfaceAbsorb : Get the surface absorbant area
+         */
         float CalculateSurfaceAbsorb ()
         {
             float sa = 0f;
@@ -140,6 +215,9 @@ namespace uVerb
             return sa;
         }
 
+        /**
+         * CreateNode : Creates a new 'advanced' mapping node, the old one was scrapped so this is now default.
+         */
         void CreateNode (float yOffset)
         {
             Vector3 v = origin;
@@ -151,43 +229,9 @@ namespace uVerb
             nodes.Add(new uVerbMappingNodeAdv(this, v));
         }
 
-        public Vector3 convertVector (Vector3 vec)
-        {
-            float xPos = Mathf.FloorToInt(vec.x);
-            xPos += 0.5f;
-            float zPos = Mathf.FloorToInt(vec.z);
-            zPos += 0.5f;
-
-            return new Vector3(xPos, vec.y, zPos);
-        }
-
-        void FindFloor ()
-        {
-            // Use Mesh raycasting
-            if (raycastingType.Equals(RaycastingType.Mesh))
-            {
-                Debug.LogError("Mesh Raycasting is not implemented yet!");
-            }
-
-            // Physics Raycasting by default or selection
-            else
-            {
-                RaycastHit hit;
-                if (Physics.Raycast(transform.position, Vector3.down, out hit))
-                {
-                    float yPos = Mathf.Round(hit.point.y);
-                    yPos += 0.5f;
-                    origin = new Vector3(hit.point.x, yPos, hit.point.z);
-                    origin = convertVector(origin);
-                }
-
-                else
-                {
-                    Debug.LogError("We can't find the floor!");
-                }
-            }
-        }
-
+        /**
+         * OnDrawGizmos : Debug drawing stuff
+         */
         void OnDrawGizmos ()
         {
             if (DEBUG)
