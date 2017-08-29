@@ -89,12 +89,8 @@ namespace uVerb
         {
             foreach (uVerbNode node in nodes)
             {
-                node.isActive = false;
-                if (mapper.pointIsMapped(node.Location))
-                {
-                    node.isActive = true;
-                    node.UpdateProperties(mapper, mapper.reverbType);
-                }
+                node.isActive = true;
+                node.UpdateProperties(mapper, mapper.reverbType);
             }
         }
 

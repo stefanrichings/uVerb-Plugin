@@ -25,6 +25,10 @@ namespace uVerb
 
             uVerbEnums.Materials approximateMaterial (string str)
             {
+                if (str.Contains(" (Instance)"))
+                {
+                    str = str.Replace(" (Instance)", "");
+                }
                 string[] names = Enum.GetNames(typeof(uVerbEnums.Materials));
                 int index = 0, distance = 999;
                 for (int i = 0; i < names.Length; i++)
@@ -47,6 +51,7 @@ namespace uVerb
                 }
 
                 uVerbEnums.Materials m = (uVerbEnums.Materials)index;
+                // Debug.Log("Material mapped as " + m.ToString());
                 return m;
             }
         }

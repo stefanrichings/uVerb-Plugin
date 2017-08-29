@@ -7,7 +7,6 @@ namespace uVerb
     public class uVerbMappingNodeAdv
     {
         uVerbMapper parent;
-        List<Vector3> points = new List<Vector3>();
         List<Vector3> pointsToMap = new List<Vector3>();
         Vector3[] dirs = new Vector3[]
         {
@@ -26,23 +25,22 @@ namespace uVerb
 
         void Map ()
         {
-            points.Add(origin);
+            parent.addPoints(origin);
             pointsToMap.Add(origin);
 
             bool mapping = true;
             while (mapping)
             {
                 Vector3[] temp = pointsToMap.ToArray();
-                foreach (Vector3 p in temp)
+
+                for (int i=0; i < temp.Length; i++)
                 {
-                    MapPoint(p);
-                    pointsToMap.Remove(p);
+                    MapPoint(temp[i]);
+                    pointsToMap.Remove(temp[i]);
                 }
 
                 if (pointsToMap.Count == 0) mapping = false;
             }
-
-            parent.addPoints(points.ToArray());
         }
 
         void MapPoint (Vector3 p)
@@ -52,11 +50,12 @@ namespace uVerb
             {
                 if (!isPointMapped(p + dirs[i]))
                 {
-                    if (Physics.Raycast(p, dirs[i], out hit))
+                    float extents = parent.boxcastThreshold;
+                    if (Physics.BoxCast(p, new Vector3(extents,extents,extents), dirs[i], out hit))
                     {
                         if (hit.distance > 1)
                         {
-                            points.Add(p + dirs[i]);
+                            parent.addPoints(p + dirs[i]);
                             pointsToMap.Add(p + dirs[i]);
                         }
 
@@ -73,7 +72,7 @@ namespace uVerb
 
         bool isPointMapped (Vector3 p)
         {
-            return points.Contains(p);
+            return parent.pointIsMapped(p);
         }
     }
 }

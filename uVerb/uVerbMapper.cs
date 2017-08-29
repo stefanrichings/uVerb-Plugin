@@ -13,6 +13,7 @@ namespace uVerb
      *      ======
      *      raycastingType  :   Which type of raycasting to use? Unity Physics or Mesh?
      *      reverbType      :   The reverb type to use
+     *      boxcastThreshold:   The higher the number, the lower the precision
      *      DEBUG           :   Debug capabilities on or off
      *      
      *      PRIVATE
@@ -38,6 +39,8 @@ namespace uVerb
         }
         public RaycastingType raycastingType = RaycastingType.Physics;
         public uVerbDetectionZone.ReverbType reverbType;
+        [Range(0.1f, 0.5f)]
+        public float boxcastThreshold = 0.25f;
         public bool DEBUG;
 
         uVerbMaterialReader mr = new uVerbMaterialReader();
@@ -157,6 +160,20 @@ namespace uVerb
             yPos += 0.5f;
 
             return new Vector3(xPos, yPos, zPos);
+        }
+
+        /**
+         * ForceRemap : Forces remapping of room
+         */
+        public void ForceRemap ()
+        {
+            origin = convertVector(new Vector3(transform.position.x, transform.position.y, transform.position.z));
+            surfaceArea.Clear();
+            nodes.Clear();
+            mappedPoints.Clear();
+            CreateNode(0);
+            saAvg = CalculateSurfaceAbsorb();
+            Debug.Log("Reverberation time is " + GetAverageRT60() + "s");
         }
 
         /**
