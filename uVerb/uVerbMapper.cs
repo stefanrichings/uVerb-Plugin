@@ -47,9 +47,10 @@ namespace uVerb
         uVerbMaterials materialInfo;
         List<Vector3> mappedPoints = new List<Vector3>();
         List<uVerbMappingNodeAdv> nodes = new List<uVerbMappingNodeAdv>();
-        List<Vector3> surfaceArea = new List<Vector3>();
+        float surfaceArea = 0f;
         Vector3 origin;
         float saAvg;
+        float extraVolume = 0f;
         const float k = 0.161f;
 
         /**
@@ -72,7 +73,7 @@ namespace uVerb
             if (Single.IsNaN(rt60))
                 return 0.1f;
             else
-                return (k * Volume) / saAvg;
+                return rt60;
         }
 
         /**
@@ -96,17 +97,17 @@ namespace uVerb
             mappedPoints.AddRange(pts);
         }
 
+        public void addExtraVolume (float volume)
+        {
+            extraVolume += volume;
+        }
+
         /**
          * addToSurfaceArea : Two methods to add points to the list of surface area points.
          */
-        public void addToSurfaceArea (Vector3 pt)
+        public void addToSurfaceArea (float amnt)
         {
-            surfaceArea.Add(pt);
-        }
-
-        public void addToSurfaceArea (Vector3[] pts)
-        {
-            surfaceArea.AddRange(pts);
+            surfaceArea += amnt;
         }
 
         /**
@@ -117,6 +118,11 @@ namespace uVerb
             mr.LogMaterial(mat);
         }
 
+        public void mapMaterial ()
+        {
+            mr.LogMaterial();
+        }
+
         /**
          * SurfaceArea : Returns the surface area, needs tweaking I think.
          */
@@ -124,7 +130,7 @@ namespace uVerb
         {
             get
             {
-                return surfaceArea.Count;
+                return surfaceArea;
             }
         }
 
@@ -135,7 +141,7 @@ namespace uVerb
         {
             get
             {
-                return mappedPoints.Count;
+                return mappedPoints.Count + extraVolume;
             }
         }
 
@@ -168,12 +174,15 @@ namespace uVerb
         public void ForceRemap ()
         {
             origin = convertVector(new Vector3(transform.position.x, transform.position.y, transform.position.z));
-            surfaceArea.Clear();
+            surfaceArea = 0;
+            extraVolume = 0;
             nodes.Clear();
             mappedPoints.Clear();
             CreateNode(0);
             saAvg = CalculateSurfaceAbsorb();
             Debug.Log("Reverberation time is " + GetAverageRT60() + "s");
+            Debug.Log("Volume is " + Volume + " - extra volume is " + extraVolume);
+            Debug.Log("Surface Area is " + SurfaceArea);
         }
 
         /**
@@ -204,6 +213,8 @@ namespace uVerb
                 CreateNode(0);
                 saAvg = CalculateSurfaceAbsorb();
                 Debug.Log("Reverberation time is " + GetAverageRT60() + "s");
+                Debug.Log("Volume is " + Volume + " - extra volume is " + extraVolume + " - mapped is " + mappedPoints.Count);
+                Debug.Log("Surface Area is " + SurfaceArea);
             }
         }
 
@@ -216,9 +227,10 @@ namespace uVerb
             if (mappedPoints.Contains(origin))
                 return false;
 
-            surfaceArea.Clear();
+            surfaceArea = 0;
             nodes.Clear();
             mappedPoints.Clear();
+            extraVolume = 0;
             return true;
         }
 

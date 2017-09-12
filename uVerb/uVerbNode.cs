@@ -70,6 +70,7 @@ namespace uVerb
         public void UpdateProperties (uVerbDetectionZone zone, uVerbDetectionZone.ReverbType type)
         {
             rt60 = zone.GetAverageRT60();
+            Debug.Log(rt60);
             reverbType = type;
         }
 

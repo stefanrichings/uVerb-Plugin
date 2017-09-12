@@ -1,6 +1,7 @@
 namespace uVerb {
     public class uVerbEnums {
         public enum Materials {
+            Air,
             Acoustic_Tile_Rigid_Mount,
             Acoustic_Tile_Suspended,
             Acoustical_Plaster,
@@ -23,15 +24,19 @@ namespace uVerb {
             Wooden_Floor,
             Linoleum,
             Pile_Carpet,
+            Wax,
             Rubber,
             Steel,
+            Iron,
             Wood_Door,
             Timber_Door,
             Student_Seated,
             Plastic_Chair,
             Leather_Chair,
             Water,
-            Ventilation_Grille
+            Ventilation_Grille,
+            Mineral_Wool,
+            OSB
         }
     }
 }

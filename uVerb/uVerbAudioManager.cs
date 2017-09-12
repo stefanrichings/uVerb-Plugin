@@ -30,10 +30,10 @@ namespace uVerb
          */
         public enum ReverbType
         {
-            Boxes,
-            Realtime
+            Simple,
+            Dynamic
         }
-        public ReverbType type = ReverbType.Realtime;
+        public ReverbType type = ReverbType.Dynamic;
         public static uVerbAudioManager manager = null;
 
         uVerbMaterials loadedData;
@@ -71,7 +71,7 @@ namespace uVerb
          */
         void Update ()
         {
-            if (type.Equals(ReverbType.Boxes))
+            if (type.Equals(ReverbType.Simple))
             {
                 CheckZones();
             }

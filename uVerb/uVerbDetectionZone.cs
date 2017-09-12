@@ -40,7 +40,7 @@ namespace uVerb
         public bool debug;
 
         Bounds zone;
-        float volume, saAvg;
+        float volume, saAvg, surfaceArea;
         Absorption[] absorption;
 
         const float k = 0.161f;
@@ -107,6 +107,9 @@ namespace uVerb
             };
 
             saAvg = CalculateAvgSurfaceAbsorb();
+
+            Debug.Log("Volume is " + volume);
+            Debug.Log("Surface Area is " + surfaceArea);
         }
 
         /**
@@ -142,7 +145,7 @@ namespace uVerb
             if (Single.IsNaN(rt60))
                 return 0.1f;
             else
-                return (k * volume) / saAvg;
+                return rt60;
         }
 
         /**
@@ -169,6 +172,7 @@ namespace uVerb
 
             for (int i = 0; i < surfaces.Length; i++)
             {
+                surfaceArea += surfaces[i] * 2;
                 sa += surfaces[i] * absorption[i].AverageAbsorption();
                 sa += surfaces[i] * absorption[i + 1].AverageAbsorption();
             }

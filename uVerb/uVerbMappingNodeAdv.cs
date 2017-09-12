@@ -61,13 +61,63 @@ namespace uVerb
 
                         else
                         {
-                            parent.addToSurfaceArea(p + dirs[i]);
+                            parent.addExtraVolume(hit.distance);
+                            parent.addToSurfaceArea(getSurfaceArea(p, dirs[i]));
                             Renderer rend = hit.transform.gameObject.GetComponent<Renderer>();
-                            if (rend != null) parent.mapMaterial(rend.material);
+                            if (rend != null)
+                            {
+                                parent.mapMaterial(rend.material);
+                            }
+
+                            else
+                            {
+                                parent.mapMaterial();
+                            }
                         }
                     }
                 }
             }
+        }
+
+        float getSurfaceArea (Vector3 p, Vector3 dir)
+        {
+            RaycastHit hit;
+            float extents = parent.boxcastThreshold;
+            float surface = 1f;
+            Dictionary<Vector3, Vector3[]> index = new Dictionary<Vector3, Vector3[]>
+            {
+                { Vector3.forward, new Vector3[] { Vector3.up, Vector3.down, Vector3.left, Vector3.right } },
+                { Vector3.back, new Vector3[] { Vector3.up, Vector3.down, Vector3.left, Vector3.right } },
+                { Vector3.left, new Vector3[] { Vector3.up, Vector3.down, Vector3.forward, Vector3.back } },
+                { Vector3.right, new Vector3[] { Vector3.up, Vector3.down, Vector3.forward, Vector3.back } },
+                { Vector3.up, new Vector3[] { Vector3.forward, Vector3.back, Vector3.left, Vector3.right } },
+                { Vector3.down, new Vector3[] { Vector3.forward, Vector3.back, Vector3.left, Vector3.right } }
+            };
+
+            Vector3[] arr;
+            index.TryGetValue(dir, out arr);
+            for (int i = 0; i < arr.Length; i++)
+            {
+                if (Physics.Raycast(p, arr[i], out hit))
+                {
+                    if (hit.distance < 0.75f)
+                    {
+                        surface++;
+                        Renderer rend = hit.transform.gameObject.GetComponent<Renderer>();
+                        if (rend != null)
+                        {
+                            parent.mapMaterial(rend.material);
+                        }
+
+                        else
+                        {
+                            parent.mapMaterial();
+                        }
+                    }
+                }
+            }
+
+            return surface;
         }
 
         bool isPointMapped (Vector3 p)

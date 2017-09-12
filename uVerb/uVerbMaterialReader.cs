@@ -51,7 +51,7 @@ namespace uVerb
                 }
 
                 uVerbEnums.Materials m = (uVerbEnums.Materials)index;
-                // Debug.Log("Material mapped as " + m.ToString());
+                Debug.Log("Material " + str + " mapped as " + m.ToString());
                 return m;
             }
         }
@@ -65,7 +65,6 @@ namespace uVerb
             if (materials.ContainsKey(mat.name))
             {
                 materials[mat.name]++;
-                totalHits++;
             }
 
             else
@@ -74,8 +73,26 @@ namespace uVerb
                 MaterialLog ml = new MaterialLog(mat.name);
                 ml.Assign();
                 logged.Add(ml);
-                totalHits++;
             }
+            totalHits++;
+        }
+
+        public void LogMaterial ()
+        {
+            const string def = "Air";
+            if (materials.ContainsKey(def))
+            {
+                materials[def]++;
+            }
+
+            else
+            {
+                materials.Add(def, 1);
+                MaterialLog ml = new MaterialLog(def);
+                ml.Assign();
+                logged.Add(ml);
+            }
+            totalHits++;
         }
 
         public float AddSurfaceAbsorbs (uVerbMaterials materialInfo, float surfaceArea)
